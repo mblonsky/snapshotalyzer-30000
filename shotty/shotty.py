@@ -27,7 +27,9 @@ def snapshots():
 @snapshots.command('list')
 @click.option('--project', default=None,
 	help="Only snapshots for project (tag Project:<name>)")
-def list_snapshots(project):
+@click.option('--all', 'list_all', default=False, is_flag=True,
+	help="List all snapshots for each volume, not just the most recent")
+def list_snapshots(project, list_all):
 	"List EC2 instances"
 
 	instances = filter_instances(project)
@@ -43,6 +45,8 @@ def list_snapshots(project):
 					s.progress,
 					s.start_time.strftime("%c")
 				)))
+
+				if s.state == 'completed' and not list_all: break
 
 	return
 @cli.group('volumes')
@@ -135,8 +139,9 @@ def stop_instances(project):
 		try:
 			i.stop()
 		except botocore.exceptions.ClientError as e:
-			print(" Cloud not start {0}. ".format(i.id)) + str(e))
+			print(" Could not start {0}. ".format(i.id) + str(e))
 			continue
+
 	return
 
 @instances.command('start')
